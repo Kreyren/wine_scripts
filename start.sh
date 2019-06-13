@@ -3,6 +3,7 @@
 ### Wine Portable start script
 ### Version 1.2.2
 ### Author: Kron
+### Contributor: Kreyren! <github.com/kreyren>
 ### Email: kron4ek@gmail.com
 ### Link to latest version:
 ###		Yandex.Disk: https://yadi.sk/d/IrofgqFSqHsPu
@@ -12,20 +13,22 @@
 #### Script for creating portable Wine applications. It works in all Linux
 #### distributions that have bash shell and standard GNU utilities.
 
-## Exit if root
+# Error handling
+info() { printf "INFO: $*\n" 1>&2 ; }
+warn() { printf "WARN: $*\n" 1>&2 ; }
+die() { printf "FATAL: $*\n" 1>&2 ; exit 1 ; }
 
-if [[ "$EUID" = 0 ]]
-  then echo "Do not run this script as root!"
-  exit
-fi
+## Exit if root
+[[ "$EUID" == "0" ]] && die "Do not run this script as root!"
 
 ## Show help
 
 if [ "$1" == "--help" ]; then
 	clear
-	echo -e "Available arguments:\n"
-	echo -e "--debug\t\t\t\tenable Debug mode to see more information"
-	echo -e "\t\t\t\tin output when the game starts."
+	printf '%s\n' \
+    'Available arguments:' \
+    '--debug\t\t\t\tenable Debug mode to see more information' \
+	  '\t\t\t\tin output when the game starts.' \
 	exit
 fi
 
@@ -67,27 +70,28 @@ source "$DIR/settings_$SCRIPT_NAME" &>/dev/null
 
 # Generate settings file if it's not exists or incomplete
 if [ -z $CSMT_DISABLE ] || [ -z $DXVK ] || [ -z $USE_PULSEAUDIO ] || [ -z $PBA ] || [ -z $GLIBC_REQUIRED ]; then
-	echo "CSMT_DISABLE=0" > "$DIR/settings_$SCRIPT_NAME"
-	echo "USE_PULSEAUDIO=0" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "USE_SYSTEM_WINE=0" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "RESTORE_RESOLUTION=1" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "VIRTUAL_DESKTOP=0" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "VIRTUAL_DESKTOP_SIZE=800x600" >> "$DIR/settings_$SCRIPT_NAME"
-	echo >> "$DIR/settings_$SCRIPT_NAME"
-	echo "DXVK=1" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "DXVK_HUD=0" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "ESYNC=1" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "PBA=0" >> "$DIR/settings_$SCRIPT_NAME"
-	echo >> "$DIR/settings_$SCRIPT_NAME"
-	echo "WINDOWS_VERSION=win7" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "PREFIX_ARCH=win64" >> "$DIR/settings_$SCRIPT_NAME"
-	echo >> "$DIR/settings_$SCRIPT_NAME"
-	echo "# Change these GLIBC variables only if you know what you're doing" >> "$DIR/settings_$SCRIPT_NAME"
-	echo >> "$DIR/settings_$SCRIPT_NAME"
-	echo "CHECK_GLIBC=1" >> "$DIR/settings_$SCRIPT_NAME"
-	echo "GLIBC_REQUIRED=2.23" >> "$DIR/settings_$SCRIPT_NAME"
-	echo >> "$DIR/settings_$SCRIPT_NAME"
-	echo "# You can also put custom variables in this file" >> "$DIR/settings_$SCRIPT_NAME"
+  printf '%s\n' \
+    'CSMT_DISABLE=0' \
+    'USE_PULSEAUDIO=0' \
+    'USE_SYSTEM_WINE=0' \
+    'RESTORE_RESOLUTION=1' \
+    'VIRTUAL_DESKTOP=0' \
+    'VIRTUAL_DESKTOP_SIZE=800x600' \
+    '' \
+    'DXVK=1' \
+    'DXVK_HUD=0' \
+    'ESYNC=1' \
+    'PBA=0' \
+    '' \
+    'WINDOWS_VERSION=win7' \
+    'PREFIX_ARCH=win64' \
+    '# Change these GLIBC variables only if you know what you are doing' \
+    '' \
+    'CHECK_GLIBC=1' \
+    'GLIBC_REQUIRED=2.23' \
+    '' \
+    '# You can also put custom variables in this file' \
+  >> "$DIR/settings_$SCRIPT_NAME"
 
 	source "$DIR/settings_$SCRIPT_NAME"
 fi
@@ -140,9 +144,10 @@ fi
 
 # Check WINEARCH variable and system architecture
 if [ "$WINEARCH" = "win64" ] && ! "$WINE64" --version &>/dev/null; then
-		echo "WINEARCH is set to win64."
-		echo "But seems like your Wine or your system is 32-bit."
-		echo "Use 64-bit Wine or set WINEARCH to win32."
+		printf '%s\n' \
+      'WINEARCH is set to win64.' \
+		  'But seems like your Wine or your system is 32-bit.' \
+		  'Use 64-bit Wine or set WINEARCH to win32.'
 
 		if [ "$(uname -m)" != "x86_64" ]; then
 			echo -e "\nYour system is 32-bit!"
@@ -151,10 +156,10 @@ if [ "$WINEARCH" = "win64" ] && ! "$WINE64" --version &>/dev/null; then
 		exit
 elif [ "$WINEARCH" = "win32" ] && [ $USE_SYSTEM_WINE = 0 ]; then
 	if [ "$(basename "$(readlink -f "$WINE")")" = "wine64" ]; then
-		echo "WINEARCH is set to win32."
-		echo "But seems like your Wine is pure 64-bit without multilib support."
-		echo "Use multilib (or 32-bit) Wine or set WINEARCH to win64."
-
+    printf '%s\n' \
+      'WINEARCH is set to win32.' \
+      'But seems like your Wine is pure 64-bit without multilib support.' \
+      'Use multilib (or 32-bit) Wine or set WINEARCH to win64.'
 		exit
 	fi
 fi
@@ -203,11 +208,11 @@ else
 	GAME_INFO="$(cat "$DIR/game_info/game_info.txt")"
 fi
 
-GAME="$(echo "$GAME_INFO" | sed -n 6p)"
-VERSION="$(echo "$GAME_INFO" | sed -n 2p)"
-GAME_PATH="$WINEPREFIX/drive_c/$(echo "$GAME_INFO" | sed -n 1p)"
-EXE="$(echo "$GAME_INFO" | sed -n 3p)"
-ARGS="$(echo "$GAME_INFO" | sed -n 4p)"
+GAME="$(printf "$GAME_INFO" | sed -n 6p)"
+VERSION="$(printf "$GAME_INFO" | sed -n 2p)"
+GAME_PATH="$WINEPREFIX/drive_c/$(printf "$GAME_INFO" | sed -n 1p)"
+EXE="$(printf "$GAME_INFO" | sed -n 3p)"
+ARGS="$(printf "$GAME_INFO" | sed -n 4p)"
 
 for arg in "$@"; do
 	if [ "$arg" != "--debug" ]; then
@@ -222,7 +227,7 @@ done
 WINE_VERSION="$("$WINE" --version)"
 if [ ! "$WINE_VERSION" ]; then
 	clear
-	echo "There is no Wine available in your system!"
+	printf "There is no Wine available in your system!\n"
 	exit
 fi
 
@@ -230,7 +235,7 @@ fi
 
 if [ ! "$GAME_INFO" ]; then
 	clear
-	echo "There is no game_info.txt file!"
+	printf "There is no game_info.txt file!\n"
 	exit
 fi
 
@@ -238,11 +243,9 @@ fi
 
 if ! touch "$DIR/write_test"; then
 	clear
-	echo "You have no write permissions on this directory!"
-	echo
-	echo "You can make directory writable by everyone with this command:"
-	echo
-	echo "chmod 777 DIRNAME"
+	printf '%s\n' \
+    'You have no write permissions on this directory!\n\n' \
+    'chmod 777 DIRNAME'
 	exit
 fi
 rm -f "$DIR/write_test"
@@ -261,8 +264,7 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 	rm -rf .temp_files
 
 	# Create prefix
-	echo "Creating prefix, please wait."
-	echo
+	printf "Creating prefix, please wait.\n\n"
 
 	export WINEDLLOVERRIDES="$WINEDLLOVERRIDES;mscoree,mshtml="
 	"$WINE" wineboot &>/dev/null
@@ -275,10 +277,10 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 
 	# Execute files in game_info/exe directory
 	if [ -d game_info/exe ]; then
-		echo "Executing files"
+		printf "Executing files\n"
 
 		for file in game_info/exe/*; do
-			echo "Executing file $file"
+			printf "Executing file $file\n"
 
 			"$WINE" start "$file" &>/dev/null
 			"$WINESERVER" -w
@@ -287,10 +289,10 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 
 	# Apply reg files
 	if [ -d game_info/regs ]; then
-		echo "Importing registry files"
+		printf "Importing registry files\n"
 
 		for file in game_info/regs/*.reg; do
-			echo "Importing $file"
+			printf "Importing $file\n"
 
 			"$WINE" regedit "$file" &>/dev/null
 			"$WINE64" regedit "$file" &>/dev/null
@@ -299,27 +301,27 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 
 	# Symlink requeired dlls, override and register them
 	if [ -d game_info/dlls ]; then
-		echo "Symlinking and registering dlls"
+		printf "Symlinking and registering dlls\n"
 
-		echo -e "Windows Registry Editor Version 5.00\n" > dlloverrides.reg
-		echo -e "[HKEY_CURRENT_USER\Software\Wine\DllOverrides]" >> dlloverrides.reg
+		printf "Windows Registry Editor Version 5.00\n" > dlloverrides.reg
+		printf "[HKEY_CURRENT_USER\Software\Wine\DllOverrides]" >> dlloverrides.reg
 
 		for x in game_info/dlls/*; do
-			echo "Creating symlink to $x"
+			printf "Creating symlink to $x"
 
 			ln -sfr "$x" "$WINEPREFIX/drive_c/windows/system32"
 
 			# Do not override component if required
-			echo -e '"'$(basename $x .dll)'"="native"' >> dlloverrides.reg
+			printf -e '"'$(basename $x .dll)'"="native"\n' >> dlloverrides.reg
 
 			# Register component with regsvr32
-			echo "Registering $(basename $x)"
+			printf "Registering $(basename $x)\n"
 
 			"$WINE" regsvr32 "$(basename $x)" &>/dev/null
 			"$WINE64" regsvr32 "$(basename $x)" &>/dev/null
 		done
 
-		echo "Overriding dlls"
+		printf "Overriding dlls\n"
 
 		"$WINE" regedit dlloverrides.reg &>/dev/null
 		"$WINE64" regedit dlloverrides.reg &>/dev/null
@@ -328,7 +330,7 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 	fi
 
 	# Make documents directory
-	echo "Sandboxing prefix"
+	printf "Sandboxing prefix"
 
 	# Valve's Proton uses steamuser as username
 	if [ -d "$WINEPREFIX/drive_c/users/steamuser" ]; then
@@ -354,8 +356,10 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 		# This is necessary for multilocale compatibility
 		mkdir -p Documents_Multilocale
 
-		echo "Documents_Multilocale directory is for compatibility with different languages." > Documents_Multilocale/readme.txt
-		echo "Put all files into Documents_Multilocale instead of specific directories like My Documents, Мои документы etc." >> Documents_Multilocale/readme.txt
+		printf '%s\n' \
+      'Documents_Multilocale directory is for compatibility with different languages.' \
+      'Put all files into Documents_Multilocale instead of specific directories like My Documents, Мои документы etc.' \
+     > Documents_Multilocale/readme.txt
 
 		if [ "$USERNAME" != "steamuser" ]; then
 			for x in *; do
@@ -369,7 +373,7 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 			[ -d "Мои документы" ] && rm -rf "Мои документы" && ln -sfr Documents_Multilocale "Мои документы"
 		fi
 
-		cd "$DIR"
+		cd "$DIR" # Hug sanitizating yolo!
 	fi
 
 	"$WINE" regedit /D 'HKEY_LOCAL_MACHINE\\Software\\Microsoft\Windows\CurrentVersion\Explorer\Desktop\Namespace\{9D20AAE8-0625-44B0-9CA7-71889C2254D9}' &>/dev/null
@@ -401,7 +405,7 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 	if [ -f game_info/winetricks_list.txt ]; then
 		if [ ! -f "$DIR/winetricks" ]; then
 			if ping -W 1 -c 1 8.8.8.8 &>/dev/null; then
-				echo "Downloading winetricks"
+				printf "Downloading winetricks\n"
 
 				wget -O "$DIR/winetricks" "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" &>/dev/null
 			elif command -v winetricks &>/dev/null; then
@@ -414,14 +418,15 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 				chmod +x "$DIR/winetricks"
 			fi
 
-			echo "winetricks $(cat game_info/winetricks_list.txt)"
-			echo "Executing winetricks actions, please wait."
+			printf '%s\n' \
+        'winetricks $(cat game_info/winetricks_list.txt)' \
+        'Executing winetricks actions, please wait.'
 
 			"$WINESERVER" -w
 			"$DIR/winetricks" $(cat game_info/winetricks_list.txt) &>/dev/null
 			"$WINESERVER" -w
 		else
-			echo "Winetricks not found and can't be downloaded (no internet connection)."
+			printf "Winetricks not found and can't be downloaded (no internet connection).\n"
 		fi
 	fi
 
@@ -432,9 +437,11 @@ if [ ! -d prefix ] || [ "$USERNAME" != "$(cat .temp_files/lastuser)" ] || [ "$WI
 	USERNAME="$(id -un)"
 
 	mkdir -p .temp_files
-	echo "$USERNAME" > .temp_files/lastuser
-	echo "$WINE_VERSION" > .temp_files/lastwine
+	printf "$USERNAME" > .temp_files/lastuser
+	printf "$WINE_VERSION" > .temp_files/lastwine
 fi
+
+#### You continue now, i got lazy reading this longass script - KREYREN
 
 ## Set windows version
 
